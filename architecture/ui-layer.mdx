@@ -1,0 +1,378 @@
+---
+title: UI layer
+description: Learn about the UI layer with ViewModels, activities, fragments, and reactive state management
+---
+
+The UI layer follows the MVVM (Model-View-ViewModel) pattern with reactive state management. ViewModels expose state and actions to UI components, which observe data changes and update accordingly.
+
+## ViewModels
+
+### MainViewModel
+
+The `MainViewModel` coordinates the main activity and manages the alarm detail editor:
+
+```kotlin MainViewModel.kt
+class MainViewModel(
+  private val uiStore: UiStore,
+  private val alarms: IAlarmsManager,
+  private val bugReporter: BugReporter,
+) : ViewModel() {
+  var openDrawerOnCreate: Boolean = false
+
+  fun editing(): StateFlow<EditedAlarm?> {
+    return uiStore.editing()
+  }
+
+  fun hideDetails() {
+    uiStore.hideDetails()
+  }
+
+  fun deleteEdited() {
+    uiStore.editing().value?.value?.id?.let { 
+      alarms.getAlarm(it)?.delete() 
+    }
+    uiStore.hideDetails()
+  }
+
+  fun edit(restored: EditedAlarm) {
+    uiStore.edit(restored.value, restored.isNew)
+  }
+
+  fun sendUserReport() {
+    bugReporter.sendUserReport()
+  }
+}
+```
+
+<Note>
+The `MainViewModel` delegates UI state management to `UiStore` and domain operations to `IAlarmsManager`, keeping concerns separated.
+</Note>
+
+### ListViewModel
+
+The `ListViewModel` manages the alarm list screen:
+
+```kotlin ListViewModel.kt
+class ListViewModel(
+  private val uiStore: UiStore,
+) : ViewModel() {
+  fun edit(alarmValue: AlarmValue) {
+    uiStore.edit(alarmValue)
+  }
+
+  fun createNewAlarm() {
+    uiStore.createNewAlarm()
+  }
+}
+```
+
+This ViewModel is minimal because list data comes directly from the domain `Store`:
+
+```kotlin
+// In the UI component
+store.alarms()
+  .observeOn(AndroidSchedulers.mainThread())
+  .subscribe { alarms ->
+    // Update RecyclerView adapter
+  }
+```
+
+### AlarmDetailsViewModel
+
+The `AlarmDetailsViewModel` handles the alarm detail/editor screen:
+
+```kotlin AlarmDetailsViewModel.kt
+class AlarmDetailsViewModel(
+  private val uiStore: UiStore
+) : ViewModel() {
+  fun editor(): StateFlow<EditedAlarm?> {
+    return uiStore.editing()
+  }
+
+  fun hideDetails() {
+    uiStore.hideDetails()
+  }
+
+  fun modify(reason: String, function: (AlarmValue) -> AlarmValue) {
+    uiStore.editing().value?.let { prev -> 
+      uiStore.edit(function(prev.value), prev.isNew) 
+    }
+  }
+
+  var newAlarmPopupSeen: Boolean
+    get() = uiStore.newAlarmPopupSeen
+    set(value) {
+      uiStore.newAlarmPopupSeen = value
+    }
+}
+```
+
+The `modify()` function enables functional updates:
+
+```kotlin
+// In the UI
+viewModel.modify("hour changed") { 
+  copy(hour = selectedHour) 
+}
+
+viewModel.modify("toggle repeat day") { 
+  copy(daysOfWeek = daysOfWeek.withDay(dayIndex, enabled)) 
+}
+```
+
+<Tip>
+The `modify()` function's `reason` parameter aids debugging by logging why the alarm was modified.
+</Tip>
+
+## UI state management
+
+### UiStore
+
+The `UiStore` manages transient UI state like the currently edited alarm:
+
+```kotlin
+class UiStore {
+  private val _editing = MutableStateFlow<EditedAlarm?>(null)
+  
+  fun editing(): StateFlow<EditedAlarm?> = _editing.asStateFlow()
+  
+  fun edit(value: AlarmValue, isNew: Boolean = false) {
+    _editing.value = EditedAlarm(value, isNew)
+  }
+  
+  fun hideDetails() {
+    _editing.value = null
+  }
+  
+  fun createNewAlarm() {
+    // Creates a new alarm and opens editor
+  }
+  
+  var newAlarmPopupSeen: Boolean = false
+}
+```
+
+### EditedAlarm
+
+The `EditedAlarm` data class wraps an alarm being edited:
+
+```kotlin
+data class EditedAlarm(
+  val value: AlarmValue,
+  val isNew: Boolean
+)
+```
+
+The `isNew` flag indicates whether the alarm was just created, enabling different UI behaviors (e.g., showing onboarding tips).
+
+## Reactive data flow
+
+### Observing alarm list
+
+UI components observe the domain `Store` for alarm list updates:
+
+```kotlin
+// In Fragment or Activity
+store.alarms()
+  .observeOn(AndroidSchedulers.mainThread())
+  .subscribe { alarms ->
+    adapter.submitList(alarms)
+  }
+  .let { disposable.add(it) }
+```
+
+<CardGroup cols={2}>
+  <Card title="RxJava Observable" icon="wave-pulse">
+    Domain Store exposes RxJava observables for reactive updates
+  </Card>
+  <Card title="StateFlow" icon="water">
+    ViewModels use Kotlin StateFlow for UI state
+  </Card>
+</CardGroup>
+
+### Observing next alarm
+
+The next scheduled alarm is also observable:
+
+```kotlin
+store.next()
+  .observeOn(AndroidSchedulers.mainThread())
+  .subscribe { nextOptional ->
+    if (nextOptional.isPresent()) {
+      val next = nextOptional.get()
+      updateNextAlarmUI(next.alarm, next.nextNonPrealarmTime)
+    } else {
+      hideNextAlarmUI()
+    }
+  }
+```
+
+### Alarm set events
+
+The UI listens for alarm set events to show notifications:
+
+```kotlin
+store.sets()
+  .observeOn(AndroidSchedulers.mainThread())
+  .filter { it.fromUserInteraction }
+  .subscribe { alarmSet ->
+    showToast("Alarm set for ${formatTime(alarmSet.millis)}")
+  }
+```
+
+<Note>
+The `fromUserInteraction` flag distinguishes user-initiated changes from system events (like reboot), so toasts only appear for user actions.
+</Note>
+
+## Activities and Fragments
+
+### ViewModel injection
+
+ViewModels are injected using Koin:
+
+```kotlin
+class AlarmListFragment : Fragment() {
+  private val listViewModel: ListViewModel by viewModel()
+  private val store: Store by inject()
+  
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    
+    // Observe alarm list
+    store.alarms()
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe { alarms ->
+        adapter.submitList(alarms)
+      }
+      .let { disposable.add(it) }
+  }
+}
+```
+
+### User interactions
+
+User interactions flow through ViewModels to the domain layer:
+
+```kotlin
+// Toggle alarm enabled/disabled
+alarmSwitch.setOnCheckedChangeListener { _, isChecked ->
+  alarms.enable(alarmValue, isChecked)
+}
+
+// Open alarm editor
+alarmItem.setOnClickListener {
+  listViewModel.edit(alarmValue)
+}
+
+// Create new alarm
+fabButton.setOnClickListener {
+  listViewModel.createNewAlarm()
+}
+```
+
+### Saving changes
+
+Alarm changes are committed through the domain layer:
+
+```kotlin
+// In AlarmDetailsFragment
+saveButton.setOnClickListener {
+  val editedAlarm = viewModel.editor().value?.value
+  if (editedAlarm != null) {
+    alarms.getAlarm(editedAlarm.id)?.edit { editedAlarm }
+    viewModel.hideDetails()
+  }
+}
+```
+
+<Tip>
+The `Alarm.edit()` function immediately persists changes to the repository, so no separate save call is needed.
+</Tip>
+
+## Background press handling
+
+The app uses a shared `BackPresses` component to coordinate back navigation:
+
+```kotlin
+class BackPresses {
+  private val subject = PublishSubject.create<Unit>()
+  
+  fun onBackPressed() {
+    subject.onNext(Unit)
+  }
+  
+  fun observable(): Observable<Unit> = subject
+}
+```
+
+Components can observe back presses:
+
+```kotlin
+backPresses.observable()
+  .subscribe {
+    if (isEditing) {
+      viewModel.hideDetails()
+    } else {
+      requireActivity().finish()
+    }
+  }
+```
+
+## Lifecycle management
+
+### Disposables
+
+RxJava subscriptions are managed with `CompositeDisposable`:
+
+```kotlin
+class AlarmListFragment : Fragment() {
+  private val disposable = CompositeDisposable()
+  
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    store.alarms()
+      .subscribe { alarms -> /* ... */ }
+      .let { disposable.add(it) }
+  }
+  
+  override fun onDestroyView() {
+    super.onDestroyView()
+    disposable.clear()
+  }
+}
+```
+
+### Persisting data
+
+Critical activities await data persistence before pausing:
+
+```kotlin
+override fun onPause() {
+  super.onPause()
+  alarmsRepository.awaitStored()
+}
+```
+
+<Note>
+Calling `awaitStored()` ensures alarm changes are durably persisted before the system can destroy the app.
+</Note>
+
+## Theme handling
+
+The app supports dynamic theming:
+
+```kotlin Container.kt
+single<DynamicThemeHandler> { 
+  DynamicThemeHandler(get()) 
+}
+```
+
+UI components apply themes reactively:
+
+```kotlin
+themeHandler.theme()
+  .observeOn(AndroidSchedulers.mainThread())
+  .subscribe { theme ->
+    requireActivity().setTheme(theme.styleRes)
+    requireActivity().recreate()
+  }
+```

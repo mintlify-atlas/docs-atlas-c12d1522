@@ -1,0 +1,107 @@
+---
+title: Pre-alarm
+description: Wake up gradually with a gentle alarm before your main alarm
+---
+
+Pre-alarm is a feature that plays a quiet alarm before your main alarm, helping you wake up more naturally and gently. This gives your body time to transition from deep sleep before the main alarm sounds.
+
+## How it works
+
+When pre-alarm is enabled for an alarm:
+
+1. A quiet alarm plays at a reduced volume 30 minutes before your scheduled alarm time (by default)
+2. The pre-alarm gradually fades in, just like the main alarm
+3. The pre-alarm volume is set to half of the configured pre-alarm volume setting
+4. If you don't respond to the pre-alarm, the main alarm will sound at the scheduled time
+
+<Note>
+  Pre-alarm uses the same alarm tone as your main alarm, but at a significantly reduced volume to wake you gently.
+</Note>
+
+## Configuring pre-alarm
+
+### Global settings
+
+You can configure the default pre-alarm behavior in Settings:
+
+<Accordion title="Pre-alarm duration">
+  **Preference key:** `prealarm_duration`  
+  **Default value:** 30 minutes
+  
+  This controls how many minutes before the main alarm the pre-alarm will sound. You can set this to:
+  - -1 to disable pre-alarm globally
+  - Any positive integer for the number of minutes before the main alarm
+</Accordion>
+
+<Accordion title="Pre-alarm volume">
+  **Preference key:** `key_prealarm_volume`  
+  **Default value:** 5 (out of 10)  
+  **Maximum value:** 10
+  
+  This controls the volume of the pre-alarm. The actual volume is calculated as:
+  - Pre-alarm volume setting × 0.5 (half of the selected level)
+  - This is then gradually faded in over the fade-in duration
+</Accordion>
+
+### Per-alarm settings
+
+Each alarm has its own pre-alarm toggle in the alarm details screen:
+
+1. Open an alarm's details
+2. Find the "Pre-alarm" checkbox
+3. Enable or disable pre-alarm for that specific alarm
+
+<Tip>
+  If the global pre-alarm duration is set to "none" (-1), the pre-alarm option will not appear in individual alarm settings.
+</Tip>
+
+## Pre-alarm behavior
+
+### Snoozing pre-alarm
+
+When a pre-alarm is playing, you can:
+
+- **Snooze normally**: The pre-alarm will snooze and play again after the snooze duration
+- **Snooze to a specific time**: If you snooze to a time, the alarm transitions to the snoozed state instead of pre-alarm snoozed
+
+### Dismissing pre-alarm
+
+If you dismiss a pre-alarm, the main alarm will still sound at its scheduled time. The pre-alarm only serves as a gentle warning.
+
+### Timeout behavior
+
+If the pre-alarm is not acknowledged:
+- Auto-silence will apply if enabled
+- The main alarm will still fire at the scheduled time
+
+<Note>
+  Pre-alarm scheduling is intelligent: if you set an alarm with less time remaining than the pre-alarm duration, only the main alarm will sound. For example, if you set an alarm 20 minutes from now and pre-alarm is set to 30 minutes, the pre-alarm will be skipped.
+</Note>
+
+## Technical details
+
+For developers and advanced users:
+
+- Pre-alarm state is stored in `AlarmValue.isPrealarm` (source: AlarmValue.kt:28)
+- The pre-alarm offset is calculated in milliseconds: `preAlarmDuration * 60 * 1000` (source: AlarmsScheduler.kt:147)
+- Pre-alarm uses dedicated states in the alarm state machine: `PreAlarmSetState`, `PreAlarmFiredState`, and `PreAlarmSnoozedState`
+
+## Use cases
+
+<CardGroup cols={2}>
+  <Card title="Light sleepers" icon="moon">
+    If you wake easily, pre-alarm gives you a heads-up before the main alarm
+  </Card>
+  
+  <Card title="Heavy sleepers" icon="bed">
+    Start the waking process earlier with a gentle sound
+  </Card>
+  
+  <Card title="Important appointments" icon="calendar-check">
+    Extra insurance that you'll wake up on time
+  </Card>
+  
+  <Card title="Gradual transition" icon="sun">
+    Wake up from deep sleep more naturally
+  </Card>
+</CardGroup>

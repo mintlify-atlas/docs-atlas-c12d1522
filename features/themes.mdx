@@ -1,0 +1,317 @@
+---
+title: Themes
+description: Personalize Simple Alarm Clock with five unique themes
+---
+
+Simple Alarm Clock offers five distinct themes to personalize your alarm experience. Each theme features its own color scheme, lighting effects, and visual style.
+
+## Available themes
+
+<CardGroup cols={2}>
+  <Card title="Deus Ex" icon="palette">
+    Dark theme with golden accents inspired by cyberpunk aesthetics
+  </Card>
+  
+  <Card title="Dark" icon="moon">
+    Modern dark theme with teal accents and subtle shadows
+  </Card>
+  
+  <Card title="Light" icon="sun">
+    Clean light theme with dark action bar and purple accents
+  </Card>
+  
+  <Card title="Synthwave" icon="wave-square">
+    Retro-futuristic theme with purple and pink colors
+  </Card>
+  
+  <Card title="Deep Blue" icon="water">
+    Dark blue theme with bright blue accents
+  </Card>
+</CardGroup>
+
+## Changing themes
+
+**Preference key:** `ui_theme`  
+**Default value:** `deusex`
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to the Settings screen from the main menu
+  </Step>
+  
+  <Step title="Find theme option">
+    Look for "Theme" or "UI theme" in the settings list
+  </Step>
+  
+  <Step title="Select theme">
+    Choose from:
+    - Deus Ex (default)
+    - Dark
+    - Light
+    - Synthwave
+    - Deep Blue
+  </Step>
+  
+  <Step title="Theme applies immediately">
+    The new theme takes effect immediately without restarting the app
+  </Step>
+</Steps>
+
+## Theme details
+
+### Deus Ex theme
+
+**Theme key:** `deusex`
+
+A dark cyberpunk-inspired theme with distinctive golden accents:
+
+- **Primary color:** Golden orange (`#d0902f`)
+- **Secondary color:** Golden orange (`#d0902f`)
+- **Background:** Almost black (`@color/blackish`)
+- **Surface:** Dark grey
+- **FAB color:** Burnt orange (`#a15501`)
+- **Shadow color:** Golden glow effect
+
+<Accordion title="Deus Ex color specifications">
+  ```xml
+  deusex_on_background: #whitish
+  deusex_surface: @color/dark_grey
+  deusex_on_surface: #whitish
+  deusex_background: @color/blackish
+  deusex_secondary: #d0902f
+  deusex_ripple: @color/dark_grey
+  deusex_glow: @color/blackish
+  deusex_primary: #d0902f
+  deusex_fab_color: #a15501
+  deusex_menu_background: @color/mat_almost_black
+  ```
+  
+  Source: themes_deus_ex.xml
+</Accordion>
+
+### Dark theme
+
+**Theme key:** `dark`
+
+A modern dark theme with teal accents:
+
+- **Primary color:** Teal (`@color/mat_teal_ws`)
+- **Secondary color:** Teal
+- **Background:** Almost black (`@color/mat_almost_black_ws`)
+- **Surface:** Grey (`@color/mat_grey_ws`)
+- **FAB color:** Teal
+- **Shadow color:** Teal glow effect
+
+<Accordion title="Dark theme color specifications">
+  ```xml
+  dark_on_background: @color/whitish
+  dark_on_surface: @color/whitish
+  dark_surface: @color/mat_grey_ws
+  dark_background: @color/mat_almost_black_ws
+  dark_secondary: @color/mat_teal_ws
+  dark_ripple: @color/mat_grey_ws
+  dark_glow: @color/mat_teal_secondary_variant
+  dark_primary: @color/mat_teal_ws
+  dark_fab_color: @color/mat_teal_ws
+  ```
+  
+  Source: themes_dark.xml
+</Accordion>
+
+### Light theme
+
+**Theme key:** `light`
+
+A clean light theme based on AppCompat Light with a dark action bar:
+
+- **Primary color:** Blue purple (`@color/mat_blue_purple_primary`)
+- **Secondary color:** Teal variant (`@color/mat_teal_secondary_variant`)
+- **Background:** System default light background
+- **Action bar:** Dark grey with white text
+- **FAB color:** Blue purple
+
+<Accordion title="Light theme color specifications">
+  ```xml
+  light_on_background: @color/mat_almost_black
+  light_surface: @color/blackish
+  light_background: @color/grey
+  light_secondary: @color/mat_teal_secondary_variant
+  light_ripple: @color/mat_teal_secondary
+  light_glow: @color/dark_grey
+  light_primary: @color/mat_blue_purple_primary
+  ```
+  
+  Source: themes_light.xml
+</Accordion>
+
+<Note>
+  The light theme uses `Theme.AppCompat.Light.DarkActionBar` as its base, providing a light interface with a contrasting dark action bar.
+</Note>
+
+### Synthwave theme
+
+**Theme key:** `synthwave`
+
+A retro-futuristic theme inspired by 1980s aesthetics:
+
+- **Primary color:** Blue variant (`@color/mat_blue_primary_variant`)
+- **Secondary color:** Purple (`@color/mat_purple`)
+- **Background:** Almost black (`@color/mat_almost_black`)
+- **Surface:** Purple dark (`@color/mat_purple_dark`)
+- **FAB color:** Purple
+- **Shadow color:** Purple glow effect
+
+<Accordion title="Synthwave theme color specifications">
+  ```xml
+  synthwave_on_background: @color/whitish
+  synthwave_on_surface: @color/whitish
+  synthwave_surface: @color/mat_purple_dark
+  synthwave_background: @color/mat_almost_black
+  synthwave_secondary: @color/mat_purple
+  synthwave_ripple: @color/mat_purple_lighter
+  synthwave_glow: @color/mat_purple
+  synthwave_primary: @color/mat_blue_primary_variant
+  synthwave_fab_color: @color/mat_purple
+  ```
+  
+  Source: themes_synthwave.xml
+</Accordion>
+
+### Deep Blue theme
+
+**Theme key:** `deepblue`
+
+A dark theme with deep blue tones and bright blue accents:
+
+- **Primary color:** Sky blue (`#5fa3de`)
+- **Secondary color:** Sky blue
+- **Background:** Dark blue (`#1d2733`)
+- **Surface:** Navy blue (`#202d3b`)
+- **FAB color:** Sky blue
+- **Shadow color:** Black shadow
+
+<Accordion title="Deep Blue theme color specifications">
+  ```xml
+  deepblue_on_background: @color/whitish
+  deepblue_surface: #202d3b
+  deepblue_on_surface: @color/whitish
+  deepblue_background: #1d2733
+  deepblue_secondary: #5fa3de
+  deepblue_ripple: @color/dark_grey
+  deepblue_glow: @color/blackish
+  deepblue_primary: #5fa3de
+  deepblue_fab_color: #5fa3de
+  deepblue_menu_background: @color/mat_almost_black
+  ```
+  
+  Source: themes_deep_blue.xml
+</Accordion>
+
+## Theme components
+
+Each theme customizes multiple aspects of the app's appearance:
+
+### Colors affected by themes
+
+- **Primary colors:** Action bar, status bar, key UI elements
+- **Secondary colors:** Buttons, links, accented text
+- **Background colors:** Main screen background
+- **Surface colors:** Cards, dialogs, elevated elements
+- **FAB color:** Floating Action Button (the "+" button)
+- **Ripple effects:** Touch feedback animations
+
+### Themed components
+
+<CardGroup cols={2}>
+  <Card title="Alarm list" icon="list">
+    Background, text colors, disabled alarm styling
+  </Card>
+  
+  <Card title="Dialogs" icon="square">
+    Background, text, and button colors
+  </Card>
+  
+  <Card title="Time picker" icon="clock">
+    Custom themed time picker with matching colors
+  </Card>
+  
+  <Card title="Drawer" icon="bars">
+    Navigation drawer background and text colors
+  </Card>
+</CardGroup>
+
+### Shadow and lighting effects
+
+Each theme includes customized shadow effects (Android P+):
+
+- **Ambient shadow:** Soft, diffused shadows around elevated elements
+- **Spot shadow:** Directional shadows for depth perception
+- **Shadow colors:** Some themes use colored shadows for visual effect
+- **Shadow opacity:** Varies by theme (0.2 to 0.5)
+
+<Tip>
+  Shadow effects with custom colors (like the purple glow in Synthwave) are only visible on Android 9.0 (Pie) and above. On older versions, standard shadows are used.
+</Tip>
+
+## Theme architecture
+
+For developers and contributors:
+
+### Theme inheritance
+
+All themes inherit from `Theme.AppCompat` or `Theme.AppCompat.Light.DarkActionBar`:
+
+```xml
+<style name="DefaultDeusExTheme" parent="Theme.AppCompat">
+  <!-- theme attributes -->
+</style>
+```
+
+### Context-specific themes
+
+Each theme includes variations for different contexts:
+
+- **Default theme:** Used for main app screens (lists, settings, details)
+- **AlarmAlertFullScreen:** Full-screen alarm alert with no action bar
+- **DialogTheme:** Themed dialogs and popups
+- **TimePickerDialogFragment:** Custom time picker styling
+
+### Snackbar styling
+
+Each theme has custom snackbar styling:
+
+```xml
+<style name="Widget.App.SnackbarDefaultDeusExTheme" parent="">
+  <item name="android:background">@color/deusex_fab_color</item>
+</style>
+```
+
+## Choosing the right theme
+
+<Accordion title="For daytime use">
+  **Light theme** is ideal for daytime use:
+  - Easier to read in bright environments
+  - Familiar light interface
+  - High contrast for quick glances
+</Accordion>
+
+<Accordion title="For nighttime use">
+  Any dark theme works well at night:
+  - **Deus Ex**: Warm golden tones, easier on eyes
+  - **Dark**: Cool teal accents, modern look
+  - **Synthwave**: Purple aesthetic, nostalgic feel
+  - **Deep Blue**: Blue tones, midnight atmosphere
+</Accordion>
+
+<Accordion title="For style preference">
+  Choose based on your aesthetic:
+  - **Deus Ex**: Cyberpunk, futuristic, distinctive
+  - **Dark**: Clean, modern, professional
+  - **Light**: Classic, familiar, bright
+  - **Synthwave**: Retro, vibrant, artistic
+  - **Deep Blue**: Calm, oceanic, serene
+</Accordion>
+
+<Note>
+  Theme preference is stored locally and persists across app restarts and device reboots.
+</Note>

@@ -1,0 +1,396 @@
+---
+title: Testing
+description: Learn about testing Simple Alarm Clock including unit tests, instrumentation tests, and code coverage
+---
+
+Simple Alarm Clock has a comprehensive test suite covering both unit tests and instrumentation tests. This guide explains how to run tests and generate code coverage reports.
+
+## Test overview
+
+The project uses:
+
+- **Unit tests**: Fast tests that run on the JVM using JUnit, MockK, and AssertJ
+- **Instrumentation tests**: UI and integration tests that run on Android devices/emulators using Espresso
+- **Code coverage**: Jacoco for measuring test coverage
+
+## Running tests
+
+### Run all unit tests
+
+Unit tests are located in `app/src/test/` and run on the JVM without requiring an Android device.
+
+<CodeGroup>
+```bash Command line
+# Run all unit tests
+./gradlew test
+
+# Run unit tests for specific variant
+./gradlew testDevelopDebugUnitTest
+
+# Run with coverage
+./gradlew testDevelopDebugUnitTest jacocoTestReport
+```
+
+```bash Android Studio
+# Right-click on the test directory or file
+# Select "Run Tests" or "Run with Coverage"
+```
+</CodeGroup>
+
+<Tip>
+  Unit tests are fast and don't require a device. Run them frequently during development.
+</Tip>
+
+### Run instrumentation tests
+
+Instrumentation tests are located in `app/src/androidTest/` and run on a physical device or emulator.
+
+<Steps>
+  <Step title="Connect device or start emulator">
+    Make sure you have a device connected or an emulator running:
+    ```bash
+    adb devices
+    ```
+  </Step>
+
+  <Step title="Run instrumentation tests">
+    ```bash
+    # Run all instrumentation tests
+    ./gradlew connectedDevelopDebugAndroidTest
+
+    # Run specific test
+    ./gradlew connectedDevelopDebugAndroidTest \
+      -Pandroid.testInstrumentationRunnerArguments.class=com.better.alarm.test.ListTest
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Instrumentation tests can take 20+ minutes to complete. The project sets a timeout of 20 minutes:
+  ```kotlin
+  installation {
+    timeOutInMs = 20 * 60 * 1000 // 20 minutes
+  }
+  ```
+</Warning>
+
+## Test frameworks and libraries
+
+### Unit testing dependencies
+
+<CodeGroup>
+```kotlin JUnit 4
+testImplementation("junit:junit:4.13.2")
+```
+
+```kotlin MockK
+testImplementation("io.mockk:mockk:1.13.17")
+```
+
+```kotlin AssertJ
+testImplementation("net.wuerl.kotlin:assertj-core-kotlin:0.2.1")
+```
+
+```kotlin Coroutines Test
+testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+```
+
+```kotlin SLF4J Simple
+testImplementation("org.slf4j:slf4j-simple:2.0.17")
+```
+</CodeGroup>
+
+### Instrumentation testing dependencies
+
+<CodeGroup>
+```kotlin Espresso
+androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+```
+
+```kotlin AndroidX Test
+androidTestImplementation("androidx.test:runner:1.6.1")
+androidTestImplementation("androidx.test:rules:1.6.1")
+androidTestImplementation("androidx.test.ext:junit:1.2.1")
+```
+
+```kotlin AssertJ Android
+androidTestImplementation("com.squareup.assertj:assertj-android:1.2.0")
+```
+</CodeGroup>
+
+## Example tests
+
+### Unit test example
+
+From `app/src/test/java/com/better/alarm/AlarmsTest.kt:94`:
+
+```kotlin
+@Test
+fun create() {
+  // when
+  val instance: IAlarmsManager = createAlarms()
+  val newAlarm = instance.createNewAlarm()
+  newAlarm.enable(true)
+  // verify
+  store.alarms().test().assertValue { alarmValues ->
+    alarmValues.size == 1 && alarmValues[0].isEnabled
+  }
+}
+```
+
+This test verifies that creating and enabling an alarm works correctly.
+
+### Instrumentation test example
+
+From `app/src/androidTest/java/com/better/alarm/test/ListTest.kt:54`:
+
+```kotlin
+@Test
+fun newAlarmShouldBeDisabledIfNotEdited() {
+  clickFab()
+  onView(withText("Cancel")).perform(click())
+  onView(withText("OK")).perform(click())
+
+  assertThat(alarmsList()).hasSize(3)
+  assertThat(alarmsList().filter { it.isEnabled }).isEmpty()
+}
+```
+
+This test verifies UI behavior when creating and canceling a new alarm.
+
+## Code coverage
+
+The project uses [Jacoco](https://www.jacoco.org/) for code coverage reporting.
+
+### Generate coverage report
+
+To generate a complete coverage report including both unit and instrumentation tests:
+
+```bash
+# Run all tests and generate coverage report
+./gradlew test connectedDevelopDebugAndroidTest jacocoTestReport
+```
+
+<Note>
+  This command:
+  1. Runs unit tests for the developDebug variant
+  2. Runs instrumentation tests on a connected device
+  3. Combines coverage data from both test types
+  4. Generates HTML and XML reports
+</Note>
+
+### View coverage reports
+
+After generating the report, you can find the coverage files at:
+
+```
+app/build/reports/jacoco/jacocoTestReport/
+├── html/
+│   └── index.html  # Open this in a browser
+└── jacocoTestReport.xml  # For CI tools like Codecov
+```
+
+Open `app/build/reports/jacoco/jacocoTestReport/html/index.html` in a web browser to view the detailed coverage report.
+
+### Coverage configuration
+
+The Jacoco task is configured in `app/build.gradle.kts:12`:
+
+```kotlin
+tasks.create("jacocoTestReport", JacocoReport::class.java) {
+  group = "Reporting"
+  description = "Generate Jacoco coverage reports."
+
+  reports {
+    xml.required.set(true)
+    html.required.set(true)
+  }
+
+  val fileFilter = listOf(
+    "**/R.class",
+    "**/R$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    "**/*Test*.*",
+    "android/**/*.*",
+    "**/*\$\$serializer.class",
+  )
+
+  // Combines unit and instrumentation test coverage
+  executionData.setFrom(
+    fileTree(project.buildDir) {
+      include(
+        "jacoco/testDevelopDebugUnitTest.exec",
+        "outputs/code_coverage/developDebugAndroidTest/connected/**/*.ec",
+      )
+    }
+  )
+}
+```
+
+### CI coverage reporting
+
+The project is integrated with [Codecov](https://codecov.io/gh/yuriykulikov/AlarmClock) for tracking coverage over time.
+
+<Tip>
+  Check the current coverage status at: [codecov.io/gh/yuriykulikov/AlarmClock](https://codecov.io/gh/yuriykulikov/AlarmClock)
+</Tip>
+
+## Test configuration
+
+### Test runner configuration
+
+The project uses AndroidX Test runner for instrumentation tests:
+
+```kotlin
+android {
+  defaultConfig {
+    testApplicationId = "com.better.alarm.test"
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+  testNamespace = "com.better.alarm.debug"
+}
+```
+
+### Unit test configuration
+
+```kotlin
+android {
+  testOptions { 
+    unitTests.isReturnDefaultValues = true 
+  }
+}
+
+tasks.withType(Test::class.java) {
+  (this.extensions.getByName("jacoco") as JacocoTaskExtension).apply {
+    isIncludeNoLocationClasses = true
+    excludes = listOf("jdk.internal.*")
+  }
+
+  systemProperty("org.slf4j.simpleLogger.logFile", "System.out")
+  systemProperty("org.slf4j.simpleLogger.defaultLogLevel", "trace")
+}
+```
+
+## Test categories
+
+The test suite includes:
+
+### Model and business logic tests
+
+- `AlarmsTest.kt` - Alarm creation, scheduling, and state management
+- `AlarmCoreTest.kt` - Core alarm functionality
+- `AlarmSchedulerTest.kt` - Alarm scheduling logic
+- `DaysOfWeekTest.kt` - Days of week handling
+
+### Data and persistence tests
+
+- `DataStoreAlarmsRepositoryTest.kt` - DataStore persistence
+- `PrimitiveDataStoresMediumTest.kt` - DataStore operations
+- `ProtobufTest.kt` - Protocol buffer serialization
+
+### UI and integration tests
+
+- `ListTest.kt` - Alarm list UI interactions
+- `PickerTest.kt` - Time picker functionality
+- `PopupTest.kt` - Popup dialogs
+- `MigrationTest.kt` - Data migration scenarios
+
+### State machine tests
+
+- `StateMachineTest.kt` - Alarm state machine transitions
+
+## Running specific tests
+
+### Run a single test class
+
+```bash
+# Unit test
+./gradlew test --tests "com.better.alarm.AlarmsTest"
+
+# Instrumentation test
+./gradlew connectedDevelopDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.better.alarm.test.ListTest
+```
+
+### Run a single test method
+
+```bash
+# Unit test
+./gradlew test --tests "com.better.alarm.AlarmsTest.create"
+
+# Instrumentation test
+./gradlew connectedDevelopDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.better.alarm.test.ListTest#newAlarmShouldBeDisabledIfNotEdited
+```
+
+## Best practices
+
+<Steps>
+  <Step title="Write unit tests first">
+    Unit tests are fast and should be your first line of defense. Write them as you develop.
+  </Step>
+
+  <Step title="Use MockK for mocking">
+    The project uses MockK for Kotlin-friendly mocking:
+    ```kotlin
+    val stateNotifierMock: IStateNotifier = mockk(relaxed = true)
+    ```
+  </Step>
+
+  <Step title="Use AssertJ for assertions">
+    AssertJ provides fluent, readable assertions:
+    ```kotlin
+    assertThat(alarmsList()).hasSize(3)
+    assertThat(alarmsList().filter { it.isEnabled }).isEmpty()
+    ```
+  </Step>
+
+  <Step title="Test coroutines properly">
+    Use `kotlinx-coroutines-test` for testing coroutines:
+    ```kotlin
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    ```
+  </Step>
+
+  <Step title="Run tests before committing">
+    Always run the test suite before pushing:
+    ```bash
+    ./gradlew test
+    ```
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Instrumentation tests fail to connect
+
+Ensure your device/emulator is properly connected:
+
+```bash
+adb devices
+adb logcat
+```
+
+### Out of memory during tests
+
+Increase heap size in `gradle.properties`:
+
+```properties
+org.gradle.jvmargs=-Xmx2048M
+```
+
+### Tests fail on CI but pass locally
+
+Check that you're using the same Gradle command as CI:
+
+```bash
+./gradlew assembleDevelopDebug
+./gradlew testDevelopDebugUnitTest
+```
+
+## Next steps
+
+- Review the [contributing guidelines](/development/contributing)
+- Explore existing tests for examples
+- Check coverage reports to find untested code

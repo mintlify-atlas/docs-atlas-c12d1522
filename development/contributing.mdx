@@ -1,0 +1,389 @@
+---
+title: Contributing
+description: Learn how to contribute to Simple Alarm Clock
+---
+
+Thank you for considering contributing to Simple Alarm Clock! This guide will help you understand how to contribute effectively.
+
+## About the project
+
+Simple Alarm Clock is an open source Android alarm clock app that brings pure alarm experience by combining powerful features with a clean interface.
+
+- **Repository**: [github.com/yuriykulikov/AlarmClock](https://github.com/yuriykulikov/AlarmClock)
+- **License**: Apache 2.0
+- **Language**: Kotlin
+- **Platforms**: Google Play, F-Droid
+
+<Note>
+  The application code is branched from AOSP (Android Open Source Project) and maintains compatibility with both proprietary and open source Android distributions.
+</Note>
+
+## Ways to contribute
+
+There are many ways to contribute to Simple Alarm Clock:
+
+<Steps>
+  <Step title="Report bugs">
+    Found a bug? Submit a bug report using the GitHub issue template.
+  </Step>
+
+  <Step title="Request features">
+    Have an idea for a new feature? Additional feature requests are appreciated! Use the feature request template.
+  </Step>
+
+  <Step title="Submit code">
+    Fix bugs, implement features, or improve documentation through pull requests.
+  </Step>
+
+  <Step title="Test and review">
+    Test pull requests and provide feedback on proposed changes.
+  </Step>
+
+  <Step title="Improve documentation">
+    Help improve the documentation, code comments, or examples.
+  </Step>
+</Steps>
+
+## Before you start
+
+Before contributing code, please:
+
+1. **Check existing issues**: Search for existing issues or feature requests to avoid duplicates
+2. **Set up your environment**: Follow the [development setup guide](/development/setup)
+3. **Understand the codebase**: Familiarize yourself with the project structure and architecture
+4. **Read the code of conduct**: Be respectful and professional in all interactions
+
+## Making code contributions
+
+### Fork and clone
+
+<Steps>
+  <Step title="Fork the repository">
+    Fork the repository on GitHub to your account.
+  </Step>
+
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/AlarmClock.git
+    cd AlarmClock
+    ```
+  </Step>
+
+  <Step title="Add upstream remote">
+    ```bash
+    git remote add upstream https://github.com/yuriykulikov/AlarmClock.git
+    ```
+  </Step>
+</Steps>
+
+### Create a branch
+
+Create a new branch for your changes:
+
+```bash
+# For a new feature
+git checkout -b feature/your-feature-name
+
+# For a bug fix
+git checkout -b fix/issue-description
+
+# For documentation
+git checkout -b docs/what-you-are-documenting
+```
+
+<Tip>
+  Use descriptive branch names that clearly indicate what you're working on.
+</Tip>
+
+### Make your changes
+
+When making changes:
+
+<Steps>
+  <Step title="Follow coding standards">
+    The project uses:
+    - **Kotlin code style**: Official Kotlin style
+    - **Formatter**: ktfmt for Kotlin, Google Java Format for Java
+    - **Line endings**: Unix (LF)
+  </Step>
+
+  <Step title="Write tests">
+    Add or update tests for your changes. See the [testing guide](/development/testing) for details.
+  </Step>
+
+  <Step title="Format your code">
+    Run Spotless to format your code:
+    ```bash
+    ./gradlew spotlessApply
+    ```
+  </Step>
+
+  <Step title="Run tests">
+    Ensure all tests pass:
+    ```bash
+    ./gradlew test
+    ./gradlew testDevelopDebugUnitTest
+    ```
+  </Step>
+
+  <Step title="Build the app">
+    Verify the app builds successfully:
+    ```bash
+    ./gradlew assembleDevelopDebug
+    ```
+  </Step>
+</Steps>
+
+### Coding standards
+
+#### Kotlin style
+
+The project follows the [official Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html):
+
+```kotlin gradle.properties
+kotlin.code.style=official
+```
+
+#### Code formatting
+
+All code must be formatted with Spotless:
+
+<CodeGroup>
+```bash Apply formatting
+./gradlew spotlessApply
+```
+
+```bash Check formatting
+./gradlew spotlessCheck
+```
+</CodeGroup>
+
+**Formatting configuration**:
+
+- **Kotlin**: ktfmt formatter with Unix line endings
+- **Java**: Google Java Format with Unix line endings
+- **Targets**: `build.gradle.kts`, `**/*.kt`, `**/*.java`
+- **Excludes**: Build directories and test resources
+
+<Warning>
+  All pull requests must pass `spotlessCheck`. Format your code before committing!
+</Warning>
+
+#### Compiler options
+
+The project uses specific Kotlin compiler options:
+
+```kotlin
+kotlinOptions {
+  freeCompilerArgs = freeCompilerArgs + 
+    "-opt-in=kotlin.RequiresOptIn" + 
+    "-opt-in=kotlin.Experimental"
+  jvmTarget = "1.8"
+}
+```
+
+### Commit your changes
+
+Write clear, descriptive commit messages:
+
+```bash
+# Good commit messages
+git commit -m "Fix alarm not ringing on Android 13+"
+git commit -m "Add support for custom snooze duration"
+git commit -m "Update time picker UI for better accessibility"
+
+# Bad commit messages
+git commit -m "fix bug"
+git commit -m "update"
+git commit -m "wip"
+```
+
+**Commit message guidelines**:
+
+- Use the imperative mood ("Add feature" not "Added feature")
+- Keep the first line under 72 characters
+- Provide context in the commit body if needed
+- Reference issue numbers when applicable (e.g., "Fixes #123")
+
+### Push and create a pull request
+
+<Steps>
+  <Step title="Push your changes">
+    ```bash
+    git push origin your-branch-name
+    ```
+  </Step>
+
+  <Step title="Create pull request">
+    Go to GitHub and create a pull request from your fork to the main repository.
+  </Step>
+
+  <Step title="Fill in the PR template">
+    Provide a clear description of your changes:
+    - What problem does this solve?
+    - How did you test it?
+    - Any breaking changes?
+    - Screenshots (for UI changes)
+  </Step>
+
+  <Step title="Link related issues">
+    Reference any related issues in your PR description:
+    ```markdown
+    Fixes #123
+    Related to #456
+    ```
+  </Step>
+</Steps>
+
+## Pull request guidelines
+
+### PR requirements
+
+Your pull request should:
+
+- [ ] Pass all existing tests
+- [ ] Include new tests for new functionality
+- [ ] Pass `spotlessCheck` (code formatting)
+- [ ] Build successfully (`./gradlew assembleDevelopDebug`)
+- [ ] Have a clear, descriptive title
+- [ ] Include a detailed description of changes
+- [ ] Reference related issues
+- [ ] Be based on the latest `develop` branch
+
+### PR process
+
+1. **Automated checks**: CI will automatically run tests and checks
+2. **Code review**: Maintainers will review your code
+3. **Feedback**: Address any feedback or requested changes
+4. **Approval**: Once approved, your PR will be merged
+
+<Note>
+  Be patient! Maintainers review PRs as time allows. It may take a few days to get feedback.
+</Note>
+
+## CI/CD pipeline
+
+The project uses GitHub Actions for continuous integration. On every push and pull request, the following checks run:
+
+```bash
+# Build the app
+./gradlew assembleDevelopDebug
+
+# Run unit tests
+./gradlew testDevelopDebugUnitTest
+```
+
+You can see the build status on the repository:
+
+[![Build Status](https://github.com/yuriykulikov/AlarmClock/actions/workflows/gradle.yml/badge.svg?branch=develop)](https://github.com/yuriykulikov/AlarmClock/actions)
+
+## Code review process
+
+During code review, maintainers will check:
+
+- **Code quality**: Is the code clean, readable, and maintainable?
+- **Tests**: Are there adequate tests? Do they pass?
+- **Documentation**: Are changes documented?
+- **Performance**: Does it impact app performance?
+- **Compatibility**: Does it work across supported Android versions?
+- **Breaking changes**: Are there any breaking changes?
+
+## Development workflow best practices
+
+<Steps>
+  <Step title="Keep your fork updated">
+    Regularly sync your fork with the upstream repository:
+    ```bash
+    git fetch upstream
+    git checkout develop
+    git merge upstream/develop
+    ```
+  </Step>
+
+  <Step title="Make small, focused PRs">
+    Smaller PRs are easier to review and more likely to be merged quickly.
+  </Step>
+
+  <Step title="Test thoroughly">
+    Test on multiple Android versions and devices if possible.
+  </Step>
+
+  <Step title="Respond to feedback">
+    Be responsive to code review comments and questions.
+  </Step>
+
+  <Step title="Be patient and respectful">
+    Remember that maintainers are volunteers. Be patient and respectful in all interactions.
+  </Step>
+</Steps>
+
+## Reporting bugs
+
+When reporting bugs, please include:
+
+- **Android version**: What version of Android are you using?
+- **Device**: What device are you using?
+- **App version**: What version of Simple Alarm Clock?
+- **Steps to reproduce**: Clear steps to reproduce the issue
+- **Expected behavior**: What should happen?
+- **Actual behavior**: What actually happens?
+- **Logs**: If possible, include relevant logcat output
+- **Screenshots**: If applicable, add screenshots
+
+<Tip>
+  You can also submit bug reports by sending an email to the developers.
+</Tip>
+
+## Requesting features
+
+When requesting features:
+
+- **Check existing requests**: Search for similar feature requests first
+- **Describe the use case**: Why is this feature needed?
+- **Provide examples**: How would it work? Include mockups if possible
+- **Consider alternatives**: Are there other ways to achieve the same goal?
+
+## License
+
+By contributing to Simple Alarm Clock, you agree that your contributions will be licensed under the Apache License 2.0.
+
+```
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+<Note>
+  The Apache 2.0 license is a permissive open source license that allows for both commercial and non-commercial use.
+</Note>
+
+## Getting help
+
+If you need help:
+
+- **Documentation**: Check the [setup guide](/development/setup), [building guide](/development/building), and [testing guide](/development/testing)
+- **Issues**: Search existing GitHub issues for similar problems
+- **Discussions**: Use GitHub Discussions for questions
+- **Email**: Contact the developers via email for complex questions
+
+## Community
+
+Simple Alarm Clock is maintained by [Yuriy Kulikov](https://github.com/yuriykulikov) and the community.
+
+- **GitHub**: [github.com/yuriykulikov/AlarmClock](https://github.com/yuriykulikov/AlarmClock)
+- **Google Play**: [Simple Alarm Clock](https://play.google.com/store/apps/details?id=com.better.alarm)
+- **F-Droid**: [Simple Alarm Clock](https://f-droid.org/packages/com.better.alarm/)
+
+## Thank you!
+
+Thank you for contributing to Simple Alarm Clock! Your contributions help make the app better for everyone.

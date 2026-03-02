@@ -1,0 +1,245 @@
+---
+title: Settings
+description: Complete reference for all preferences and configuration options in Simple Alarm Clock
+---
+
+Simple Alarm Clock provides extensive customization through its settings. This page documents all available preferences and their values.
+
+## Preferences overview
+
+Settings are stored using the `Prefs` class and use reactive data stores that emit updates when values change. Most settings apply globally to all alarms, while some can be overridden per alarm.
+
+## Sound and vibration
+
+### Default ringtone
+
+**Key**: `KEY_DEFAULT_RINGTONE`  
+**Default value**: System default alarm sound
+
+Sets the default ringtone for new alarms. Individual alarms can override this setting.
+
+**Possible values**:
+- `"Silent"`: No sound
+- `"Default"`: Use the app's default ringtone
+- `"SystemDefault"`: Use the device's default alarm sound
+- URI string: Path to a custom ringtone file
+
+<Note>
+  When an alarm is set to "Default" ringtone, it uses whatever is configured here as the app default.
+</Note>
+
+### Vibration
+
+**Key**: `KEY_VIBRATE`  
+**Type**: Boolean  
+**Default value**: `true`
+
+Controls whether alarms vibrate when ringing. This is a global setting that affects all alarms unless overridden.
+
+<Tip>
+  Vibration is enabled by default, making it harder to miss alarms even if your device is on silent.
+</Tip>
+
+### Fade-in time
+
+**Key**: `KEY_FADE_IN_TIME_SEC`  
+**Type**: Integer (seconds)  
+**Default value**: `30`
+
+The duration over which the alarm volume gradually increases from silence to full volume.
+
+**Special values**:
+- `1`: Fade-in is disabled (alarm starts at full volume immediately)
+- Any other value: Number of seconds to fade in
+
+<Accordion title="Why use fade-in?">
+  A gradual volume increase provides a gentler wake-up experience compared to an alarm that starts at full volume. The 30-second default gives you time to wake naturally before the alarm reaches maximum volume.
+</Accordion>
+
+### Volume preference
+
+**Key**: `KEY_VOLUME_PREFERENCE`
+
+Access point for volume-related settings in the UI. Used by the `VolumePreference` custom preference component.
+
+## Snooze settings
+
+### Snooze duration
+
+**Key**: `KEY_ALARM_SNOOZE`  
+**Type**: Integer (minutes)  
+**Default value**: `10`
+
+The number of minutes an alarm is postponed when you snooze it.
+
+When you snooze an alarm:
+1. The app adds this many minutes to the current time
+2. The alarm is rescheduled for that new time
+3. A snooze notification appears showing when it will ring again
+
+<Note>
+  You can also snooze to a specific time by using the reschedule option from the snooze notification.
+</Note>
+
+### Long-click to dismiss
+
+**Key**: `KEY_LONGCLICK_DISMISS`  
+**Type**: Boolean  
+**Default value**: `true`
+
+When enabled, you must long-press the dismiss button to turn off an alarm. This prevents accidentally dismissing alarms with a quick tap.
+
+## Pre-alarm settings
+
+Pre-alarms provide a gentle wake-up period before your main alarm rings.
+
+### Pre-alarm duration
+
+**Key**: `KEY_PREALARM_DURATION`  
+**Type**: Integer (minutes)  
+**Default value**: `30`
+
+How many minutes before the main alarm time the pre-alarm should start.
+
+**Special values**:
+- `-1`: Pre-alarms are disabled
+- Any positive value: Minutes before the main alarm
+
+<Accordion title="How pre-alarms work">
+  When enabled, the pre-alarm rings at a lower volume for the specified duration before the main alarm. The pre-alarm is designed to gently bring you out of deep sleep, making it easier to wake up when the main alarm rings.
+  
+  For example, with a 30-minute pre-alarm and a 7:00 AM main alarm:
+  - 6:30 AM: Pre-alarm starts playing at low volume
+  - 7:00 AM: Main alarm rings at full volume (or faded-in volume)
+</Accordion>
+
+<Warning>
+  If the pre-alarm duration is longer than the time until the alarm, the app will only set the main alarm. For example, setting a 30-minute pre-alarm for an alarm 15 minutes from now will skip the pre-alarm.
+</Warning>
+
+### Pre-alarm volume
+
+**Key**: `KEY_PREALARM_VOLUME`  
+**Type**: Integer  
+**Default value**: `5`  
+**Maximum value**: `MAX_PREALARM_VOLUME` (`10`)
+
+The volume level for the pre-alarm on a scale from 0 to 10, where:
+- `0`: Nearly silent
+- `5`: Medium volume (default)
+- `10`: Maximum volume
+
+The pre-alarm volume is typically set lower than the main alarm to provide a gradual wake-up experience.
+
+## Auto-silence
+
+**Key**: `KEY_AUTO_SILENCE`  
+**Type**: Integer (minutes)  
+**Default value**: `10`
+
+How long an alarm rings before automatically silencing itself if you don't interact with it.
+
+**Special values**:
+- `-1`: Auto-silence is disabled (alarm rings indefinitely)
+- Any positive value: Minutes until the alarm auto-silences
+
+When an alarm auto-silences:
+1. The alarm stops ringing
+2. A notification appears indicating the alarm was silenced
+3. The alarm is rescheduled or dismissed according to its configuration
+
+<Tip>
+  The default 10-minute auto-silence prevents alarms from ringing endlessly if you're away from your device, while still being long enough to wake you under normal circumstances.
+</Tip>
+
+## Skip notifications
+
+### Skip duration
+
+**Key**: `KEY_SKIP_DURATION`  
+**Type**: Integer (minutes)  
+**Default value**: `30`
+
+How many minutes before an alarm is scheduled to ring that a skip notification should appear.
+
+**Special values**:
+- `-1`: Skip notifications are disabled
+- Any positive value: Minutes before alarm time
+
+The skip notification includes an action button that lets you:
+- Skip the next occurrence of a repeating alarm
+- Disable a one-time alarm before it rings
+
+See the [scheduling guide](/guide/scheduling) for more details on skip functionality.
+
+## User interface
+
+### Theme
+
+**Key**: `KEY_THEME`  
+**Type**: String  
+**Default value**: `"deusex"`
+
+The visual theme for the app interface.
+
+<Note>
+  Changing the theme requires restarting the app to fully apply the new colors and styling.
+</Note>
+
+### List row layout
+
+**Key**: `LIST_ROW_LAYOUT`  
+**Type**: String  
+**Default value**: `LIST_ROW_LAYOUT_BOLD` (`"bold"`)
+
+Controls how alarms appear in the alarm list.
+
+**Available layouts**:
+- `LIST_ROW_LAYOUT_CLASSIC` (`"classic"`): Traditional layout with standard text sizing
+- `LIST_ROW_LAYOUT_COMPACT` (`"compact"`): Condensed layout showing more alarms on screen
+- `LIST_ROW_LAYOUT_BOLD` (`"bold"`): Large, bold text for better readability
+
+The layout affects:
+- Time display size and style
+- Label and repeat information positioning
+- Overall alarm row height
+- Touch target sizes
+
+## Time format
+
+The app respects your device's 12-hour or 24-hour time format setting. This is obtained from the system and cannot be overridden within the app.
+
+The `is24HourFormat` value is provided as a `Single<Boolean>` that emits the current format preference.
+
+## Observing preference changes
+
+All preference values are stored in reactive data stores (`RxDataStore<T>`) that emit updates when values change:
+
+```kotlin
+prefs.snoozeDuration.observe()
+  .subscribe { duration ->
+    // React to snooze duration changes
+  }
+```
+
+You can also read the current value synchronously:
+
+```kotlin
+val currentSnooze = prefs.snoozeDuration.value
+```
+
+<Tip>
+  The alarm core subscribes to pre-alarm duration changes and automatically reschedules alarms when this setting changes, ensuring your alarms always use the current preference.
+</Tip>
+
+## System settings
+
+### Alarm in silent mode
+
+**Key**: `KEY_ALARM_IN_SILENT_MODE`
+
+This setting controls whether alarms ring even when the device is in silent mode. On modern Android versions, this setting may be removed from the UI as alarms typically bypass Do Not Disturb mode by default.
+
+<Note>
+  This setting modifies `Settings.System.MODE_RINGER_STREAMS_AFFECTED` to include or exclude the alarm audio stream.
+</Note>

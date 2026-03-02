@@ -1,0 +1,159 @@
+---
+title: Snooze
+description: Delay your alarm with customizable snooze duration or snooze to a specific time
+---
+
+The snooze feature lets you temporarily delay your alarm when you need a few more minutes of sleep. Simple Alarm Clock offers flexible snooze options including a configurable default duration and the ability to snooze to a specific time.
+
+## Default snooze behavior
+
+When you tap the snooze button on an alarm:
+
+1. The alarm sound and vibration stop immediately
+2. A notification appears showing when the alarm will ring again
+3. The alarm will ring again after the configured snooze duration (10 minutes by default)
+4. You can snooze multiple times if needed
+
+<Note>
+  Snooze can be disabled entirely by setting the snooze duration to -1 in settings. When disabled, only the dismiss button will appear on the alarm screen.
+</Note>
+
+## Configuring snooze
+
+### Global snooze duration
+
+**Preference key:** `snooze_duration`  
+**Default value:** 10 minutes
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to the Settings screen from the main menu
+  </Step>
+  
+  <Step title="Find snooze duration">
+    Look for the "Snooze duration" option
+  </Step>
+  
+  <Step title="Select duration">
+    Choose your preferred snooze duration:
+    - -1 to disable snooze
+    - Any positive integer for the number of minutes
+  </Step>
+</Steps>
+
+<Tip>
+  Setting snooze duration to -1 will hide the snooze button on the alarm screen, preventing accidental snoozing.
+</Tip>
+
+## Snooze to specific time
+
+Instead of using the default snooze duration, you can snooze to a specific time:
+
+1. When an alarm is ringing, **long-press** the snooze button
+2. A time picker appears
+3. Select the exact time you want the alarm to ring again
+4. The alarm will ring at that specific time
+
+<Accordion title="Snooze picker behavior">
+  When you open the snooze time picker:
+  
+  - The alarm is muted for the first 10 seconds while you pick a time
+  - This prevents the alarm from playing loudly while you're selecting a time
+  - The muting happens automatically when the picker opens
+  
+  Source: AlarmAlertFullScreen.kt:168-172
+</Accordion>
+
+## Snooze with pre-alarm
+
+Pre-alarm and snooze interact in specific ways:
+
+### Snoozing a pre-alarm
+
+- **Regular snooze**: The pre-alarm snoozes and will ring again after the snooze duration
+- **Snooze to time**: The alarm transitions to the regular snoozed state (skipping pre-alarm snoozed state)
+
+### Snoozing the main alarm
+
+When you snooze a main alarm after a pre-alarm has already played:
+- The next snooze will be a regular alarm (not a pre-alarm)
+- Pre-alarm only plays before the originally scheduled time
+
+<Note>
+  If a pre-alarm is snoozed, the main alarm will still fire at its originally scheduled time if you don't acknowledge the snoozed pre-alarm.
+</Note>
+
+## Snooze notifications
+
+When an alarm is snoozed:
+
+<CardGroup cols={2}>
+  <Card title="Notification appears" icon="bell">
+    Shows the alarm label and the time it will ring again
+  </Card>
+  
+  <Card title="Reschedule option" icon="clock">
+    Tap the notification to reschedule the snooze time
+  </Card>
+  
+  <Card title="Cancel option" icon="xmark">
+    Dismiss the notification to cancel the snoozed alarm
+  </Card>
+  
+  <Card title="Time display" icon="calendar">
+    Shows formatted time string: "Alarm snoozed until [time]"
+  </Card>
+</CardGroup>
+
+## Multiple snoozes
+
+You can snooze an alarm as many times as you want:
+
+1. Each snooze resets the timer
+2. The alarm state remains "snoozed" between snooze activations
+3. Snoozing a snoozed alarm simply reschedules it
+4. You can mix regular snooze and snooze-to-time
+
+<Accordion title="Snooze state management">
+  Internally, snoozed alarms maintain their state:
+  
+  - The alarm transitions to `SnoozedState` when snoozed (source: AlarmCore.kt:551)
+  - Re-snoozing simply updates the next fire time
+  - The alarm remains enabled but in a snoozed state
+  - Snooze survives app restarts and reboots
+</Accordion>
+
+## Snooze and repeating alarms
+
+For repeating alarms:
+
+- Snoozing delays only the current occurrence
+- After dismissing (not snoozing), the alarm reschedules for the next day/week
+- Snoozed alarms can be rescheduled while in snoozed state
+
+## Technical details
+
+### Snooze calculation
+
+The next snooze time is calculated as:
+
+```kotlin
+val snoozeMinutes = snoozeDuration.blockingFirst()
+nextTime.add(Calendar.MINUTE, snoozeMinutes)
+```
+
+Source: AlarmCore.kt:554-557
+
+### Snooze events
+
+- `SnoozedEvent`: Fired when an alarm is snoozed (source: AlertService.kt:49)
+- `CancelSnoozedEvent`: Fired when a snoozed alarm is cancelled (source: AlertService.kt:59)
+
+### Intent actions
+
+- `ACTION_SNOOZE`: Snooze the alarm (source: Intents.kt:30)
+- `ACTION_CANCEL_SNOOZE`: Cancel a snoozed alarm
+
+<Tip>
+  Developers can trigger snooze programmatically using `alarm.snooze()` or `alarm.snooze(hour, minute)` for time-specific snoozing.
+</Tip>

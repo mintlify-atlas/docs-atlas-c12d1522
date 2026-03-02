@@ -1,0 +1,340 @@
+---
+title: Data layer
+description: Explore the data layer with AlarmValue data class, AlarmsRepository interface, DataStore persistence, and SQLite migration
+---
+
+The data layer handles persistence and data models for Simple Alarm Clock. It uses Jetpack DataStore with Protocol Buffers for modern, type-safe storage.
+
+## Data models
+
+### AlarmValue
+
+The `AlarmValue` data class represents all alarm properties:
+
+```kotlin AlarmValue.kt
+@Serializable
+data class AlarmValue(
+  @Serializable(with = CalendarSerializer::class)
+  val nextTime: Calendar = Calendar.getInstance().apply { timeInMillis = 0 },
+  val state: String = "DisabledState",
+  val id: Int = -1,
+  val isEnabled: Boolean = false,
+  val hour: Int = 0,
+  val minutes: Int = 0,
+  val isPrealarm: Boolean = false,
+  val alarmtone: Alarmtone = Alarmtone.Default,
+  val isVibrate: Boolean = true,
+  val label: String = "",
+  val daysOfWeek: DaysOfWeek = DaysOfWeek(0),
+  val isDeleteAfterDismiss: Boolean = false,
+  @Serializable(with = CalendarSerializer::class) 
+  val date: Calendar? = null,
+)
+```
+
+<Note>
+The `@Serializable` annotation enables automatic serialization to Protocol Buffers. Custom serializers handle types like `Calendar` that aren't natively supported.
+</Note>
+
+### Computed properties
+
+`AlarmValue` includes computed properties for common checks:
+
+```kotlin
+val skipping: Boolean
+  get() = state.contentEquals("SkippingSetState")
+
+val isRepeatSet: Boolean
+  get() = date == null && daysOfWeek.coded != 0
+```
+
+### Helper methods
+
+`AlarmValue` is immutable, so it provides copy helpers for state updates:
+
+```kotlin
+fun withState(name: String): AlarmValue = copy(state = name)
+fun withIsEnabled(enabled: Boolean): AlarmValue = copy(isEnabled = enabled)
+fun withNextTime(calendar: Calendar): AlarmValue = copy(nextTime = calendar)
+
+fun withChangeData(data: AlarmValue) = copy(
+  id = data.id,
+  isEnabled = data.isEnabled,
+  hour = data.hour,
+  minutes = data.minutes,
+  isPrealarm = data.isPrealarm,
+  alarmtone = data.alarmtone,
+  isVibrate = data.isVibrate,
+  label = data.label,
+  daysOfWeek = data.daysOfWeek,
+  isDeleteAfterDismiss = data.isDeleteAfterDismiss,
+  date = data.date,
+)
+```
+
+## Repository pattern
+
+### AlarmsRepository interface
+
+The repository abstracts data access behind a clean interface:
+
+```kotlin AlarmsRepository.kt
+interface AlarmsRepository {
+  // Creates a new AlarmStore with initial AlarmValue
+  fun create(): AlarmStore
+  
+  // Query stored AlarmValues as active records (AlarmStores)
+  fun query(): List<AlarmStore>
+  
+  // Check if the repository is initialized
+  val initialized: Boolean
+  
+  // Awaits until all pending changes are durably stored
+  fun awaitStored()
+}
+```
+
+### AlarmStore interface
+
+The `AlarmStore` interface provides an active record pattern for individual alarms:
+
+```kotlin AlarmsRepository.kt
+interface AlarmStore {
+  val id: Int
+  var value: AlarmValue
+  fun delete()
+}
+```
+
+Each `AlarmStore` represents a single alarm and automatically persists changes when `value` is updated.
+
+<Tip>
+The active record pattern simplifies code by eliminating explicit save calls. Just assign a new value and it's automatically persisted.
+</Tip>
+
+### Modify helper
+
+A helper function makes updates more convenient:
+
+```kotlin
+inline fun AlarmStore.modify(func: AlarmValue.(prev: AlarmValue) -> AlarmValue) {
+  val prev = value
+  value = func(prev, prev)
+}
+```
+
+Usage example:
+
+```kotlin
+alarmStore.modify { withIsEnabled(true) }
+alarmStore.modify { copy(hour = 8, minutes = 30) }
+```
+
+## DataStore implementation
+
+### DataStoreAlarmsRepository
+
+The `DataStoreAlarmsRepository` implements `AlarmsRepository` using Jetpack DataStore:
+
+```kotlin DataStoreAlarmsRepository.kt
+class DataStoreAlarmsRepository(
+  private val logger: Logger,
+  private val ioScope: CoroutineScope,
+  initial: AlarmValues,
+  private val dataStore: DataStore<AlarmValues>,
+  override val initialized: Boolean
+) : AlarmsRepository {
+  companion object {
+    fun createBlocking(
+      datastoreDir: File,
+      logger: Logger,
+      ioScope: CoroutineScope
+    ): AlarmsRepository {
+      val initialized = datastoreDir.resolve("alarms").exists()
+      val dataStore: DataStore<AlarmValues> = DataStoreFactory.create(
+        serializer = ProtobufSerializer,
+        produceFile = { datastoreDir.resolve("alarms") },
+        scope = ioScope,
+        corruptionHandler = ReplaceFileCorruptionHandler { AlarmValues() },
+      )
+
+      val restoredValues = runBlocking { 
+        withTimeout(5000) { 
+          ioScope.async { dataStore.data.first() }.await() 
+        } 
+      }
+
+      return DataStoreAlarmsRepository(
+        logger = logger,
+        ioScope = ioScope,
+        initial = restoredValues,
+        dataStore = dataStore,
+        initialized = initialized,
+      ).also { it.launch() }
+    }
+  }
+}
+```
+
+<Note>
+`createBlocking()` loads initial data synchronously to ensure alarms are available before app initialization completes.
+</Note>
+
+### Asynchronous persistence
+
+Changes are written asynchronously:
+
+```kotlin DataStoreAlarmsRepository.kt
+private val alarmsByIdState: MutableStateFlow<Map<Int, AlarmValue>> = 
+  MutableStateFlow(initial.alarms)
+
+private fun launch() {
+  alarmsByIdState
+    .onEach { newData ->
+      dataStore.updateData { prev ->
+        // Log changes
+        prev.alarms
+          .filter { (id, value) -> id in newData && value != newData[id] }
+          .forEach { (id, prevValue) ->
+            logger.debug { "changed $prevValue => ${newData[id]}" }
+          }
+        
+        AlarmValues(alarms = newData)
+      }
+    }
+    .launchIn(ioScope)
+}
+```
+
+The repository observes the `alarmsByIdState` flow and persists changes to DataStore automatically.
+
+### Store view pattern
+
+Each `AlarmStore` is a view backed by the shared state:
+
+```kotlin DataStoreAlarmsRepository.kt
+private fun createStoreView(id: Int): AlarmStore {
+  return object : AlarmStore {
+    override val id: Int = id
+    
+    override var value: AlarmValue
+      get() {
+        check(Looper.getMainLooper() == Looper.myLooper()) { 
+          "Must be called on main thread" 
+        }
+        return requireNotNull(alarmsByIdState.value).getValue(id)
+      }
+      set(value) {
+        check(Looper.getMainLooper() == Looper.myLooper()) { 
+          "Must be called on main thread" 
+        }
+        alarmsByIdState.update { it.plus(id to value) }
+      }
+
+    override fun delete() {
+      check(Looper.getMainLooper() == Looper.myLooper()) { 
+        "Must be called on main thread" 
+      }
+      alarmsByIdState.update { it.minus(id) }
+    }
+  }
+}
+```
+
+<Note>
+All AlarmStore operations must run on the main thread to ensure thread safety with the StateFlow.
+</Note>
+
+### Awaiting persistence
+
+Critical operations can wait for data to be durably stored:
+
+```kotlin DataStoreAlarmsRepository.kt
+override fun awaitStored() {
+  runBlocking {
+    withTimeout(5000) {
+      dataStore.data.first { stored -> 
+        stored.alarms == alarmsByIdState.value 
+      }
+    }
+  }
+  logger.debug { "awaitStored() took ${duration.toInt()}ms" }
+}
+```
+
+<Tip>
+Call `awaitStored()` before the app can be destroyed (e.g., in `onPause()` or broadcast receiver's `onReceive()`) to ensure changes are persisted.
+</Tip>
+
+## Protocol Buffers serialization
+
+DataStore uses Protocol Buffers for efficient serialization:
+
+```kotlin DataStoreAlarmsRepository.kt
+@OptIn(ExperimentalSerializationApi::class)
+object ProtobufSerializer : Serializer<AlarmValues> {
+  override val defaultValue: AlarmValues = AlarmValues()
+
+  override suspend fun readFrom(input: InputStream): AlarmValues {
+    val bytes = input.readBytes()
+    return ProtoBuf.decodeFromByteArray(bytes)
+  }
+
+  override suspend fun writeTo(t: AlarmValues, output: OutputStream) {
+    output.write(ProtoBuf.encodeToByteArray(AlarmValues.serializer(), t))
+  }
+}
+```
+
+Benefits of Protocol Buffers:
+- Smaller file size than JSON
+- Faster serialization/deserialization
+- Type safety with schema evolution support
+- Automatic null handling
+
+## SQLite migration
+
+The app migrates data from the legacy SQLite database to DataStore:
+
+```kotlin Alarms.kt
+override fun migrateDatabase() {
+  val alarmsInDatabase = databaseQuery.query()
+  logger.warning { 
+    "migrateDatabase() found ${alarmsInDatabase.size} alarms in SQLite database..." 
+  }
+  
+  alarmsInDatabase.forEach { restored ->
+    logger.warning { "Migrating $restored from SQLite to DataStore" }
+    val alarmStore = alarmsRepository.create()
+    alarmStore.modify { restored.copy(id = alarmStore.id) }
+    val alarm = createAlarm(alarmStore)
+    alarms[alarm.id] = alarm
+    alarm.start()
+    databaseQuery.delete(restored.id)
+  }
+}
+```
+
+Migration happens automatically on first launch:
+
+```kotlin Alarms.kt
+fun start() {
+  alarms.putAll(
+    alarmsRepository.query().associate { store -> 
+      store.id to createAlarm(store) 
+    }
+  )
+  alarms.values.forEach { it.start() }
+  
+  if (!alarmsRepository.initialized) {
+    migrateDatabase()
+    if (alarms.isEmpty()) {
+      insertDefaultAlarms()
+    }
+  }
+}
+```
+
+<Note>
+The `initialized` property checks if the DataStore file exists. If not, migration runs to import alarms from SQLite.
+</Note>

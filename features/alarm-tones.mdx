@@ -1,0 +1,212 @@
+---
+title: Alarm tones
+description: Choose from system sounds, custom ringtones, or silent mode for your alarms
+---
+
+Simple Alarm Clock provides flexible alarm tone options, allowing you to use system default sounds, custom ringtones from your device, or even silent alarms for visual-only notifications.
+
+## Alarm tone types
+
+The app supports four types of alarm tones:
+
+<CardGroup cols={2}>
+  <Card title="System default" icon="bell">
+    Uses the device's default alarm sound set in system settings
+  </Card>
+  
+  <Card title="Default" icon="music">
+    Uses the default ringtone configured in the app settings
+  </Card>
+  
+  <Card title="Custom sound" icon="file-audio">
+    Any audio file or ringtone from your device
+  </Card>
+  
+  <Card title="Silent" icon="bell-slash">
+    No sound - visual and vibration only (if vibration is enabled)
+  </Card>
+</CardGroup>
+
+## Setting alarm tones
+
+### Global default ringtone
+
+**Preference key:** `default_ringtone`  
+**Default value:** System default
+
+This setting controls the default alarm tone for new alarms:
+
+1. Open Settings
+2. Find "Default alarm tone" or "Default ringtone"
+3. Select your preferred sound
+4. All new alarms will use this tone unless you override it
+
+<Tip>
+  The global default ringtone is stored as an `Alarmtone.SystemDefault` when first initialized, which automatically uses your device's default alarm sound.
+</Tip>
+
+### Per-alarm ringtone
+
+Each alarm can have its own unique ringtone:
+
+<Steps>
+  <Step title="Open alarm details">
+    Tap on an alarm to open its details screen
+  </Step>
+  
+  <Step title="Find ringtone option">
+    Look for the alarm tone or ringtone selector
+  </Step>
+  
+  <Step title="Choose sound">
+    Select from:
+    - System default
+    - Default (app default)
+    - Any custom ringtone from your device
+    - Silent mode
+  </Step>
+</Steps>
+
+## Alarm tone storage
+
+Alarm tones are stored as URI strings internally:
+
+<Accordion title="Alarmtone data structure">
+  The app uses a sealed class hierarchy for alarm tones (source: Alarmtone.kt):
+  
+  ```kotlin
+  sealed class Alarmtone {
+    object Silent : Alarmtone()
+    object Default : Alarmtone()
+    object SystemDefault : Alarmtone()
+    data class Sound(val uriString: String) : Alarmtone()
+  }
+  ```
+  
+  - **Silent**: No sound will play
+  - **Default**: Uses the app's default ringtone setting
+  - **SystemDefault**: Uses Android's system default alarm sound
+  - **Sound**: Custom ringtone with a specific URI
+</Accordion>
+
+## Alarm tone behavior
+
+### Fade-in effect
+
+All alarm tones (except silent) fade in gradually:
+
+- **Default fade-in time:** 30 seconds (preference key: `fade_in_time_sec`)
+- The volume starts at 0% and gradually increases to full volume
+- Fade-in applies to both regular alarms and pre-alarms
+- You can set fade-in to 1 second to effectively disable it
+
+<Note>
+  Pre-alarms play at half the configured pre-alarm volume, then that volume is faded in over the fade-in duration.
+</Note>
+
+### Volume control
+
+Alarm volume is separate from media volume:
+
+- Uses the system's alarm volume stream
+- Can be adjusted independently from notification and media volumes
+- Pre-alarm has its own volume setting (default: 5 out of 10)
+- Regular alarms use the system alarm volume
+
+<Accordion title="Volume calculation">
+  The actual volume played is calculated as:
+  
+  **For regular alarms:**
+  - System alarm volume × fade-in percentage
+  
+  **For pre-alarms:**
+  - (Pre-alarm volume setting / 10) × 0.5 × fade-in percentage
+  
+  Source: KlaxonPlugin.kt:117-122
+</Accordion>
+
+## Ringtone manager integration
+
+The app integrates with Android's RingtoneManager:
+
+<Steps>
+  <Step title="URI conversion">
+    Internal alarm tone objects are converted to URI strings that RingtoneManager can understand
+  </Step>
+  
+  <Step title="Ringtone loading">
+    The RingtoneManager loads the audio file using the URI
+  </Step>
+  
+  <Step title="Playback">
+    Audio plays through the alarm audio stream with the appropriate volume
+  </Step>
+</Steps>
+
+### Default alarm alert URI
+
+The system default alarm sound is accessed via:
+
+```kotlin
+Settings.System.DEFAULT_ALARM_ALERT_URI
+```
+
+This ensures compatibility across different Android devices and versions.
+
+## Silent alarms
+
+Silent alarms can be useful for:
+
+<CardGroup cols={2}>
+  <Card title="Vibration only" icon="mobile">
+    Wake up with vibration but no sound
+  </Card>
+  
+  <Card title="Visual notifications" icon="eye">
+    Get notified without disturbing others
+  </Card>
+  
+  <Card title="Testing" icon="flask">
+    Test alarm functionality without sound
+  </Card>
+  
+  <Card title="Reminders" icon="note-sticky">
+    Use alarms as silent reminders with notifications
+  </Card>
+</CardGroup>
+
+<Note>
+  Even with a silent alarm, the alarm notification will still appear, and vibration will work if enabled.
+</Note>
+
+## Troubleshooting
+
+<Accordion title="Alarm not playing sound">
+  If your alarm isn't making sound:
+  
+  1. Check that the alarm tone is not set to "Silent"
+  2. Verify your device's alarm volume is not at 0
+  3. Ensure Do Not Disturb allows alarms
+  4. Check that the alarm tone file/URI is still valid
+  5. Try selecting a different ringtone
+</Accordion>
+
+<Accordion title="Custom ringtone disappeared">
+  If a custom ringtone is no longer available:
+  
+  - The audio file may have been deleted or moved
+  - The app will show an error or may not play sound
+  - Select a new ringtone from the alarm details
+  - Consider using system default tones for reliability
+</Accordion>
+
+## Migration and compatibility
+
+The app includes migration logic for users upgrading from older versions:
+
+- Empty strings are converted to "Default"
+- `null` values are converted to "Silent"
+- System default URIs are normalized to "Default"
+- Custom URIs are preserved as `Sound` types
+
+Source: Alarmtone.kt:54-61

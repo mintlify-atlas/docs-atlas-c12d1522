@@ -1,0 +1,173 @@
+---
+title: Scheduling
+description: Configure repeat patterns, specific dates, and automatic deletion for your alarms
+---
+
+Simple Alarm Clock offers flexible scheduling options including repeating alarms, one-time alarms, and automatic cleanup after use.
+
+## Days of week (repeating alarms)
+
+Repeating alarms use a days-of-week pattern to determine when they should ring. This is the default scheduling mode for new alarms.
+
+### Configuring repeat days
+
+1. Open the alarm details screen
+2. Tap the "Repeat" row
+3. Select which days of the week the alarm should repeat
+4. Save your changes
+
+### How days of week work
+
+The app uses a bitmap encoding for days of week:
+- Monday: `0x01`
+- Tuesday: `0x02`
+- Wednesday: `0x04`
+- Thursday: `0x08`
+- Friday: `0x10`
+- Saturday: `0x20`
+- Sunday: `0x40`
+
+You can select any combination of days. The alarm will ring on all selected days at the configured time.
+
+### Special repeat patterns
+
+<Accordion title="Every day">
+  When all seven days are selected (`0x7f`), the alarm displays as "Every day" instead of listing individual days.
+</Accordion>
+
+<Accordion title="No repeat days">
+  When no days are selected (`0x00`), the alarm shows "Never" and effectively becomes a one-time alarm without a specific date.
+</Accordion>
+
+<Accordion title="Weekdays or weekends">
+  You can create common patterns like:
+  - Weekdays: Monday through Friday
+  - Weekends: Saturday and Sunday
+  - Custom patterns like Monday, Wednesday, Friday
+</Accordion>
+
+### Next alarm calculation
+
+When calculating the next alarm time, the app:
+1. Takes today's day of week
+2. Checks each subsequent day (0-6 days ahead)
+3. Finds the next day in the pattern
+4. Schedules the alarm for that day at the configured time
+
+If the alarm time hasn't passed today and today is selected in the pattern, the alarm rings today. Otherwise, it schedules for the next matching day.
+
+## One-time alarms with dates
+
+Instead of repeating weekly, you can set an alarm for a specific date.
+
+### Setting a specific date
+
+1. Open the alarm details screen
+2. Tap the "Repeat" row
+3. Switch to date mode instead of days-of-week mode
+4. Select the specific date
+5. Save your changes
+
+The alarm details now show "Date" instead of "Repeat" and display the selected date.
+
+<Note>
+  When you set a specific date, the days-of-week pattern is ignored. The alarm will only ring once on that date at the specified time.
+</Note>
+
+### Date validation
+
+Alarms with specific dates must be set for a future time:
+- The app calculates the alarm time by combining the date with the hour and minute
+- If the resulting time is in the past, the alarm is marked as invalid
+- The save button is disabled until you select a future date and time
+
+<Warning>
+  Setting a date in the past will prevent the alarm from being saved. Update the date to a future value before saving.
+</Warning>
+
+### Date format
+
+Dates are displayed using your device's locale settings. Internally, dates use the format `yyyy-MM-dd`.
+
+## Delete after dismiss
+
+One-time alarms can be configured to automatically delete after you dismiss them.
+
+### Enabling auto-delete
+
+1. Open the alarm details for a one-time alarm (no repeat days set)
+2. Find the "Delete after dismiss" option
+3. Enable the checkbox
+4. Save the alarm
+
+When this alarm rings and you dismiss it, the alarm is permanently deleted from your list.
+
+<Tip>
+  This feature is perfect for one-off reminders like "Pick up package today" or "Meeting at 3pm" that you don't need to keep after they've served their purpose.
+</Tip>
+
+### Availability
+
+The "Delete after dismiss" option is only available when:
+- The alarm has no repeat pattern set (days-of-week coded value is `0x00`)
+- The alarm is not set to repeat
+
+For repeating alarms, this option is hidden since the alarm needs to remain for future occurrences.
+
+## Skip notifications
+
+Alarms can show a skip notification before they're scheduled to ring, giving you the option to skip the next occurrence.
+
+### How skip works
+
+1. The app shows a notification before the alarm is due (configurable in settings)
+2. The notification includes an action button to skip the alarm
+3. If you skip a repeating alarm, it advances to the next occurrence in the pattern
+4. If you skip a one-time alarm, it's effectively disabled or deleted
+
+### Skip duration
+
+The skip notification appears a configurable number of minutes before the alarm time. This is set globally in settings with the key `KEY_SKIP_DURATION` (default: 30 minutes).
+
+Set to `-1` to disable skip notifications entirely.
+
+### Skipping state
+
+When an alarm is skipped:
+- Repeating alarms enter a "SkippingSetState" state
+- The alarm internally calculates the next occurrence (tomorrow for that day of week)
+- The next alarm after the skipped one is scheduled
+- An inexact alarm is set for when the current skip period ends
+
+<Note>
+  For repeating alarms, skipping only affects the next occurrence. The alarm will ring again on the next scheduled day according to its repeat pattern.
+</Note>
+
+## Determining if an alarm is repeating
+
+You can check if an alarm is set to repeat by examining:
+- `isRepeatSet` returns `true` when `date == null` and `daysOfWeek.coded != 0`
+- An alarm with a specific date is never considered repeating, even if days are selected
+- An alarm with no date and no days set is not repeating
+
+## Next time calculation
+
+The app calculates the next alarm time differently based on configuration:
+
+### For alarms with a specific date
+
+1. Start with the date's timestamp
+2. Set the hour and minute to the alarm time
+3. Set seconds and milliseconds to zero
+4. Use this exact calendar time
+
+### For repeating alarms
+
+1. Start with the current time
+2. Set the hour and minute to the alarm time
+3. Set seconds and milliseconds to zero
+4. If this time is in the past, advance by one day
+5. Calculate days until the next matching day-of-week
+6. Add those days to get the final alarm time
+
+This ensures alarms always schedule for the future, even if the configured time has already passed today.

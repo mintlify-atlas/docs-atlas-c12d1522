@@ -1,0 +1,106 @@
+---
+title: Creating alarms
+description: Learn how to create and configure alarms in Simple Alarm Clock
+---
+
+Simple Alarm Clock provides a straightforward interface for creating and managing alarms. This guide walks you through the alarm creation process and available configuration options.
+
+## Creating a new alarm
+
+<Steps>
+  <Step title="Add a new alarm">
+    Tap the add button to create a new alarm. A time picker will automatically appear for new alarms.
+  </Step>
+  
+  <Step title="Set the time">
+    Select the hour and minute when you want the alarm to ring. The time picker adapts to your device's 12-hour or 24-hour format setting.
+  </Step>
+  
+  <Step title="Configure alarm options">
+    Customize your alarm with additional settings:
+    - Label: Add a descriptive name for your alarm
+    - Repeat pattern: Choose which days the alarm should repeat
+    - Ringtone: Select the sound that will play
+    - Pre-alarm: Enable a gentle wake-up period before the main alarm
+    - Vibrate: Toggle vibration on or off
+  </Step>
+  
+  <Step title="Save the alarm">
+    Tap the save button to create your alarm. The alarm will be enabled automatically.
+  </Step>
+</Steps>
+
+<Note>
+  When you create a new alarm, it's automatically enabled unless you explicitly disable it before saving.
+</Note>
+
+## Alarm properties
+
+Each alarm in Simple Alarm Clock includes the following configurable properties:
+
+### Time
+
+The hour and minute when the alarm should ring. The alarm uses your device's 24-hour or 12-hour format preference.
+
+### Label
+
+An optional text label to help identify the alarm's purpose. Labels appear in the alarm list and in notifications.
+
+<Tip>
+  Use descriptive labels like "Morning workout" or "Take medication" to quickly identify alarms at a glance.
+</Tip>
+
+### Enabled state
+
+Controls whether the alarm is active. Disabled alarms remain in your list but won't ring until you enable them again.
+
+### Ringtone
+
+The sound that plays when the alarm fires. Options include:
+- **Default**: Uses the app's default ringtone setting
+- **System default**: Uses your device's default alarm sound
+- **Silent**: No sound (vibration only, if enabled)
+- **Custom sound**: Choose any ringtone or audio file from your device
+
+### Vibration
+
+When enabled, the device vibrates when the alarm rings. Vibration works alongside or independently of the ringtone.
+
+<Note>
+  Vibration is enabled by default for new alarms. You can disable it per alarm or globally in settings.
+</Note>
+
+## Editing alarms
+
+To modify an existing alarm:
+
+1. Tap the alarm in your alarm list
+2. The alarm details screen opens with all current settings
+3. Make your changes to any property
+4. Tap save to apply changes, or revert to discard them
+
+### Quick enable/disable
+
+You can quickly enable or disable an alarm without opening the details screen by tapping the toggle switch next to the alarm in the list.
+
+## Alarm validation
+
+Simple Alarm Clock validates alarm settings before saving:
+
+- One-time alarms with a specific date must be set for a future time
+- The alarm details screen displays an error if the selected date and time are in the past
+- The save button is disabled until you correct any validation errors
+
+<Warning>
+  If you set a one-time alarm for a past date and time, the app will prevent you from saving until you update it to a future time.
+</Warning>
+
+## Deleting alarms
+
+To remove an alarm:
+
+1. Open the alarm details screen
+2. Look for the delete option (typically in the overflow menu)
+3. Confirm deletion
+
+Alarms can also be configured to delete automatically after dismissal (see the scheduling guide for details).

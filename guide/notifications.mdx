@@ -1,0 +1,259 @@
+---
+title: Notifications
+description: Understand alarm notifications, skip alerts, pre-alarm notifications, and notification behavior
+---
+
+Simple Alarm Clock uses Android notifications to keep you informed about alarm states and provide quick actions. This guide covers all notification types and behaviors.
+
+## Alarm notification types
+
+The app displays different notifications depending on the alarm state:
+
+- **Active alarm notifications**: High-priority notifications when an alarm is ringing
+- **Snooze notifications**: Persistent notifications showing when a snoozed alarm will ring again
+- **Skip notifications**: Pre-alarm warnings with skip action buttons
+- **Auto-silence notifications**: Informational notifications when an alarm silences itself
+
+## Active alarm notifications
+
+When an alarm rings, a high-priority notification appears with the alarm details and quick actions.
+
+### Notification content
+
+- **Title**: The alarm's label (or a default title if no label is set)
+- **Text**: "Tap to snooze or dismiss the alarm"
+- **Icon**: Alarm bell icon
+- **Priority**: `PRIORITY_HIGH` to ensure visibility
+- **Category**: `CATEGORY_ALARM` for Android system classification
+
+### Actions
+
+Active alarm notifications include two action buttons:
+
+<Steps>
+  <Step title="Snooze">
+    Postpones the alarm for the configured snooze duration (default: 10 minutes). The alarm notification is replaced with a snooze notification.
+  </Step>
+  
+  <Step title="Dismiss">
+    Stops the alarm. Depending on the alarm configuration:
+    - Repeating alarms reschedule for the next occurrence
+    - One-time alarms are disabled
+    - Alarms set to delete after dismiss are permanently removed
+  </Step>
+</Steps>
+
+### Full-screen intent
+
+Alarm notifications use `setFullScreenIntent()` to display the alarm screen even when your device is locked. This ensures you can interact with the alarm immediately when it rings.
+
+<Note>
+  Full-screen intents require a specific permission on Android 10 and above. The app requests this permission during setup to ensure alarms can wake your screen.
+</Note>
+
+### Notification channel
+
+Active alarm notifications use the high-priority notification channel (`CHANNEL_ID_HIGH_PRIO`) to ensure they:
+- Bypass Do Not Disturb mode
+- Show heads-up notifications
+- Display on the lock screen
+- Play sounds and vibrate according to alarm settings
+
+<Warning>
+  The notification itself is set to silent (`setSound(null)`) because the alarm service handles playing the ringtone. The notification is only for display and interaction.
+</Warning>
+
+## Snooze notifications
+
+After snoozing an alarm, a persistent notification displays when the alarm will ring again.
+
+### Notification content
+
+- **Title**: "Snoozed: [alarm label]"
+- **Text**: "Alarm snoozed until [time]", where time shows when the alarm will ring
+- **Icon**: Alarm bell icon
+- **Status**: Ongoing (cannot be swiped away)
+
+### Actions
+
+Snooze notifications include:
+
+1. **Reschedule**: Opens a time picker to set a custom snooze time instead of the default duration
+2. **Dismiss**: Cancels the snooze and dismisses the alarm entirely
+
+<Tip>
+  Tap the notification body (not the action buttons) to dismiss the alarm. This provides a quick way to cancel a snooze if you've already woken up.
+</Tip>
+
+### Time format
+
+The snooze notification displays time in your device's format:
+- 24-hour format: `"E kk:mm"` (e.g., "Mon 07:30")
+- 12-hour format: `"E h:mm aa"` (e.g., "Mon 7:30 AM")
+
+### Clearing snooze notifications
+
+Snooze notifications are automatically removed when:
+- The snoozed alarm rings (transitions to active alarm notification)
+- You dismiss the alarm from the notification
+- The alarm is disabled or deleted from the alarm list
+- The alarm fires as a pre-alarm
+
+## Skip notifications
+
+Skip notifications appear before an alarm is scheduled to ring, giving you the option to skip the next occurrence.
+
+### When skip notifications appear
+
+Based on the skip duration setting (default: 30 minutes), a skip notification shows up that many minutes before the alarm time.
+
+For example, with a 30-minute skip duration and a 7:00 AM alarm:
+- 6:30 AM: Skip notification appears
+- 7:00 AM: Alarm rings (if not skipped)
+
+<Note>
+  If the skip duration is set to `-1`, skip notifications are disabled entirely.
+</Note>
+
+### Skip notification content
+
+- **Title**: The alarm's label
+- **Text**: "Alarm is about to go off: [next alarm time]"
+- **Icon**: Alarm bell icon
+- **Status**: Auto-cancel (dismisses when tapped)
+
+### Skip action
+
+The skip notification includes an action button:
+
+- For **repeating alarms**: Button reads "Skip" and advances to the next scheduled occurrence
+- For **one-time alarms**: Button reads "Disable alarm" and turns off the alarm
+
+When you tap the skip action:
+1. The skip notification disappears
+2. The alarm enters the skipping state
+3. For repeating alarms, the next occurrence is calculated and scheduled
+4. The alarm list updates to show the new next alarm time
+
+### Skip notification scheduling
+
+The app uses inexact alarms to show skip notifications:
+- If the alarm is due in more than the skip duration, an inexact alarm is scheduled
+- If the alarm is due in less than the skip duration, the skip notification appears immediately
+- Skip notifications are removed when the alarm state changes or the main alarm fires
+
+<Warning>
+  Skipping an alarm only affects the next occurrence. For repeating alarms, the alarm will still ring on subsequent scheduled days.
+</Warning>
+
+## Pre-alarm notifications
+
+Pre-alarms don't have separate notifications—they use the standard active alarm notification. The difference is that pre-alarms:
+
+- Start ringing at a lower volume (configured by `KEY_PREALARM_VOLUME`)
+- Ring for the pre-alarm duration before the main alarm
+- Transition to the main alarm notification when the main alarm time arrives
+
+### Pre-alarm behavior
+
+When a pre-alarm fires:
+1. An active alarm notification appears with the alarm label
+2. The alarm service starts playing the ringtone at pre-alarm volume
+3. The main alarm is scheduled for the configured alarm time
+4. If you snooze or dismiss during pre-alarm, the main alarm is also affected
+
+<Tip>
+  Snoozing during a pre-alarm transitions to a regular snooze state, so the main alarm won't ring at its originally scheduled time.
+</Tip>
+
+## Auto-silence notifications
+
+When an alarm rings for the auto-silence duration without interaction, it automatically stops and shows an informational notification.
+
+### Auto-silence notification content
+
+- **Title**: The alarm's label
+- **Text**: "Alarm silenced after [X] minutes", where X is the auto-silence duration
+- **Icon**: Alarm bell icon
+- **Status**: Auto-cancel
+- **Ticker**: Same as text (for accessibility)
+
+This notification is informational only and has no action buttons. It informs you that an alarm rang but was automatically silenced.
+
+<Note>
+  The alarm is still rescheduled or dismissed according to its configuration—auto-silence just stops the sound and vibration.
+</Note>
+
+## Notification channels
+
+Simple Alarm Clock uses two notification channels:
+
+### High-priority channel
+
+**ID**: `CHANNEL_ID_HIGH_PRIO`
+
+**Used for**:
+- Active alarm notifications
+- Pre-alarm notifications
+
+**Characteristics**:
+- High priority
+- Full-screen intent capability
+- Bypasses Do Not Disturb
+- Shows heads-up notifications
+
+### Standard channel
+
+**ID**: `CHANNEL_ID`
+
+**Used for**:
+- Snooze notifications
+- Skip notifications
+- Auto-silence notifications
+
+**Characteristics**:
+- Default notification priority
+- Normal notification behavior
+- Can be customized by the user in system settings
+
+<Tip>
+  You can customize notification behavior (sounds, vibration, importance) for each channel in your Android system settings under Apps → Simple Alarm Clock → Notifications.
+</Tip>
+
+## Notification IDs
+
+The app uses different ID ranges for different notification types to avoid conflicts:
+
+- **Active alarms**: Base offset `100000` + alarm index
+- **Snooze notifications**: Base offset `1000` + alarm ID
+- **Auto-silence notifications**: Base offset `2000` + alarm ID
+- **Skip notifications**: Base offset `3000` + alarm ID
+
+This ensures each alarm can have multiple notification types active simultaneously without interfering with each other.
+
+## Foreground service notifications
+
+On Android 8.0 (Oreo) and above, when an alarm rings, the app starts a foreground service with the alarm notification. This ensures:
+
+- The alarm service isn't killed by the system
+- The notification remains visible and interactive
+- The alarm continues ringing even under memory pressure
+
+The foreground service automatically stops when the alarm is dismissed or snoozed.
+
+<Note>
+  Foreground services are an Android requirement for long-running tasks like alarm playback. This is why you see a persistent notification when an alarm is ringing.
+</Note>
+
+## Notification permissions
+
+On Android 13 and above, the app requires the notification permission to display alarm notifications. The app requests this permission during initial setup.
+
+Without notification permission:
+- Alarms still ring (audio and vibration work)
+- No visual notification appears
+- You cannot interact with snooze or dismiss actions from the lock screen
+
+<Warning>
+  Grant notification permission to ensure you can interact with alarms from notifications and see when snoozed alarms will ring again.
+</Warning>

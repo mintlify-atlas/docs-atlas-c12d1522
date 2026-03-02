@@ -1,80 +1,153 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick start
+description: Set up your first alarm and explore Simple Alarm Clock's key features
 ---
 
-## Get started in three steps
+# Quick start
 
-Get your documentation site running locally and make your first customization.
+This guide will help you set up your first alarm and get familiar with Simple Alarm Clock's powerful features.
 
-### Step 1: Set up your local environment
+## Setting up your first alarm
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Open the app">
+    Launch Simple Alarm Clock from your app drawer. You'll see the main alarms list screen.
+  </Step>
+  
+  <Step title="Create a new alarm">
+    Tap the floating action button (+ icon) to create a new alarm.
+  </Step>
+  
+  <Step title="Set the time">
+    Use the phone-style keyboard time picker to enter your desired wake-up time. No more spinning through hours!
+  </Step>
+  
+  <Step title="Configure options">
+    Customize your alarm with the available options (detailed below).
+  </Step>
+  
+  <Step title="Save and enable">
+    Save your alarm. Make sure it's enabled (toggle should be on).
+  </Step>
+</Steps>
 
-### Step 2: Deploy your changes
+<Note>
+  Your alarm will automatically reschedule after device reboots, so you don't need to worry about losing your alarms.
+</Note>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+## Key features to try
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+### Pre-alarm (gentle wake-up)
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+The pre-alarm feature plays a low volume alarm before your main alarm time, helping you wake up during a light sleep phase.
 
-### Step 3: Go live
+**How to use:**
+- Enable pre-alarm in your alarm settings
+- Set it to start 30 minutes before your main alarm (recommended)
+- If you're in a light sleep phase, you'll wake up feeling more refreshed
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+<Note>
+  30 minutes is typically enough to catch a light sleep phase, but you can adjust this based on your sleep patterns.
+</Note>
+
+### Volume fade in
+
+Instead of jarring you awake with full volume, the alarm gradually increases in volume.
+
+**Benefits:**
+- Gentler wake-up experience
+- Vibration starts only after fade-in completes
+- More natural transition from sleep to waking
+
+### Snooze options
+
+Simple Alarm Clock offers two ways to snooze:
+
+<CardGroup cols={2}>
+  <Card title="Quick snooze" icon="clock-rotate-left">
+    **Single tap** on the snooze button to snooze for your preset duration
+  </Card>
+  <Card title="Custom snooze" icon="clock">
+    **Long-click** the snooze button to choose a specific snooze time with the time picker
+  </Card>
+</CardGroup>
+
+### Dismiss protection
+
+To prevent accidentally dismissing your alarm while half asleep:
+
+**Long-click the dismiss button** to turn off the alarm. A quick tap won't dismiss it.
+
+<Warning>
+  Make sure you long-click to dismiss, not just tap. This feature is designed to prevent you from turning off your alarm without realizing it.
+</Warning>
+
+## Customizing alarm sounds
+
+You can use any audio file on your device as an alarm sound:
+
+1. When creating or editing an alarm, tap the ringtone option
+2. Browse your device's audio files
+3. Select your preferred sound
+4. The app will request **READ_MEDIA_AUDIO** permission if needed
+
+## Enabling vibration
+
+To make your alarm vibrate:
+
+1. Open alarm settings
+2. Enable the vibration option
+3. Vibration will start after the volume fade-in completes
+
+## Tips for best results
+
+<CardGroup cols={2}>
+  <Card title="Use pre-alarm" icon="sun-bright">
+    Set the pre-alarm 30 minutes early for a gentler wake-up
+  </Card>
+  <Card title="Test your alarm" icon="flask">
+    Set a test alarm a few minutes ahead to verify volume and sound
+  </Card>
+  <Card title="Check permissions" icon="shield-check">
+    Ensure all required permissions are granted in Android settings
+  </Card>
+  <Card title="Disable battery optimization" icon="battery-full">
+    Prevent Android from killing the app in the background
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Alarm not firing
+
+If your alarm isn't going off:
+
+1. Check that the alarm is enabled (toggle is on)
+2. Verify you've granted the "Alarms & reminders" permission (Android 12+)
+3. Disable battery optimization for Simple Alarm Clock
+4. Make sure Do Not Disturb allows alarms
+
+### No sound playing
+
+1. Check your device volume (not just media volume)
+2. Verify the alarm sound file still exists if using a custom sound
+3. Grant the **READ_MEDIA_AUDIO** permission
+
+### Alarm dismissed itself
+
+Check your alarm settings - some alarm configurations may have auto-dismiss timers.
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you've set up your first alarm, explore the app's settings to customize:
 
-<CardGroup cols={2}>
+- Default snooze duration
+- Volume fade-in duration
+- Pre-alarm settings
+- Theme preferences
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+Access settings from the main menu (three dots) in the alarms list.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  Remember: All settings are preserved even after device reboots, so you only need to configure them once.
 </Note>
