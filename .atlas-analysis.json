@@ -1,0 +1,87 @@
+{
+  "projectType": "general",
+  "projectName": "Simple Alarm Clock",
+  "projectDescription": "Most popular open source Android Alarm Clock App with powerful features and clean interface",
+  "theme": "almond",
+  "primaryColor": "#BB86FC",
+  "lightColor": "#03DAC6",
+  "darkColor": "#6200EE",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/overview",
+              "features/prealarm",
+              "features/snooze",
+              "features/alarm-tones",
+              "features/themes"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guide/creating-alarms",
+              "guide/scheduling",
+              "guide/settings",
+              "guide/notifications"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/domain-layer",
+              "architecture/data-layer",
+              "architecture/ui-layer"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/setup",
+              "development/building",
+              "development/testing",
+              "development/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Pre-alarm with gentle wake-up",
+    "Customizable snooze duration",
+    "Volume fade-in and vibration",
+    "Long-click to dismiss prevention",
+    "Days of week scheduling",
+    "Multiple themes support",
+    "Skip notification",
+    "Custom alarm tones"
+  ],
+  "publicApiSurface": [
+    "Alarm interface (enable, snooze, dismiss, delete, edit)",
+    "AlarmValue data class (alarm properties and state)",
+    "Alarms manager (createNewAlarm, getAlarm, enable)",
+    "Prefs configuration (snooze duration, pre-alarm settings, themes)",
+    "AlarmCore state machine (alarm lifecycle management)",
+    "DaysOfWeek scheduling",
+    "Alarmtone configuration"
+  ]
+}
